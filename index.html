@@ -47,10 +47,19 @@ kbd{font-size:.8rem;color:var(--mut);border:1px solid var(--bd);border-radius:6p
 .fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.15;margin:0 4px;font-size:1.1rem}.fr b{border-bottom:2px solid var(--fg);padding:0 6px}
 .g{opacity:.25}.box{display:inline-block;border:2px solid var(--fg);border-radius:10px;padding:4px 8px;margin:4px;vertical-align:top}
 .row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}svg{max-width:100%;height:auto}svg text{fill:var(--fg)}
+#ov{position:fixed;inset:0;z-index:40;background:rgba(15,23,42,.65);display:flex;justify-content:center;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 12px}#ov[hidden]{display:none}
+.md{background:var(--card);border-radius:20px;padding:16px;max-width:600px;width:100%;margin:auto;border:2px solid var(--bd)}
+.pf{display:grid;gap:8px;margin:8px 0}.pf .bt{display:flex;align-items:center;gap:10px;font-size:1.2rem;margin:0}.pf small{margin-left:auto;color:var(--mut)}.av{font-size:2rem}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:8px auto}.pad .bt{font-size:1.5rem;min-height:56px;margin:0}.dots{text-align:center;font-size:2rem;letter-spacing:8px}
+.ip{display:block;width:100%;padding:10px;font:inherit;font-size:1.1rem;border-radius:10px;border:2px solid var(--bd);background:var(--bg);color:var(--fg);margin:4px 0 10px}
+.avs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.avs .on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 18%,var(--card))}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:10px 0}.cd{border:2px solid var(--bd);border-radius:12px;padding:8px;text-align:center;font-size:.85rem}.cd b{display:block;font-size:1.4rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{border:2px solid;border-radius:999px;padding:2px 10px;font-size:.85rem}h3{margin:14px 0 6px;font-size:1.05rem}.mn{display:grid;gap:6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
-<header class="top"><div class="brand"><span>🧮 <b>Matematika SD</b></span><span class="lb" id="prog"></span></div><nav id="tabs"></nav></header>
+<header class="top"><div class="brand"><span>🧮 <b>Matematika SD</b></span><span><span class="lb" id="prog"></span> <button class="bt" id="who" onclick="menu()" style="margin:0;min-height:40px">👤 Masuk</button></span></div><nav id="tabs"></nav></header>
 <main class="lay"><aside id="list"></aside><section id="sim" class="sim"></section></main>
+<div id="ov" hidden></div>
 <script>
 const $=s=>document.querySelector(s),A='#3b82f6',B='#f97316',C='#22c55e',D='#ec4899';
 const W='nol,satu,dua,tiga,empat,lima,enam,tujuh,delapan,sembilan,sepuluh,sebelas,dua belas,tiga belas,empat belas,lima belas,enam belas,tujuh belas,delapan belas,sembilan belas,dua puluh'.split(',');
@@ -285,9 +294,64 @@ function ct(){const f=CS[cur.t][R(0,CS[cur.t].length-1)],[q,a]=f(),o=new Set([a]
  $('#cb').innerHTML=`<div class=ex style="margin-top:8px"><b>🎯 ${q}</b><div class=opt>${[...o].sort(()=>Math.random()-.5).map(x=>`<button class=bt data-v="${x}" onclick="cj(${x},${a})">${x}</button>`).join('')}</div><div id=cf></div></div>`}
 function cj(x,a){document.querySelectorAll('#cb .opt button').forEach(z=>{z.disabled=true;if(+z.textContent==a)z.style.background='#22c55e55'});$('#cf').innerHTML=(x==a?'✅ Benar! Hebat!':`❌ Belum tepat. Jawabannya <b>${a}</b>. Baca lagi kotak penjelasan di atas ya.`)+'<br><button class=bt onclick="ct()">🔁 Soal lain</button>'}
 for(let k=1;k<=6;k++)T[k].push({t:'Latihan Soal Kelas '+k,e:'📝',prac:1});
-let qs=[],qi=0,sc=0,st={},tl=0,tt=0,g=1,cur=null,ci=0,inQ=0,pl=0,S={done:{},best:{}};const NQ=20;
-try{S=Object.assign(S,JSON.parse(localStorage.getItem('mtk')||'{}'))}catch(e){}
-const sv=()=>{try{localStorage.setItem('mtk',JSON.stringify(S))}catch(e){}},key=i=>g+'-'+i;
+let qs=[],qi=0,sc=0,st={},tl=0,tt=0,g=1,cur=null,ci=0,inQ=0,pl=0,S={done:{},best:{},ev:[],ss:[]};const NQ=20;
+const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const H=x=>{let h=5381;for(const c of 'mtk'+x)h=((h<<5)+h+c.charCodeAt(0))|0;return String(h)};
+const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+let AC=LS('mtk_acc')||{users:[],pp:null},U=null,PD=null,pin='',pcb=null;
+const accSave=()=>LS('mtk_acc',AC),dflt=()=>({done:{},best:{},ev:[],ss:[]});
+const sv=()=>{if(U)LS('mtk_d_'+U.id,S)},key=i=>g+'-'+i;
+function rec(m,ok){S.ev.push([Date.now(),m,ok?1:0]);if(S.ev.length>3000)S.ev=S.ev.slice(-3000);sv()}
+function ov(h){pcb=null;const o=$('#ov');o.innerHTML='<div class=md>'+h+'</div>';o.hidden=false}
+function ovx(){$('#ov').hidden=true;pcb=null}
+function who(){$('#who').textContent=U?U.av+' '+U.name:'👤 Masuk'}
+function showLogin(){if(U)return;ov(`<h2>👋 Siapa yang belajar?</h2>${AC.users.length?'<div class=pf>'+AC.users.map(u=>`<button class=bt onclick="askPin('${u.id}')"><span class=av>${u.av}</span><b>${esc(u.name)}</b><small>Kelas ${u.kelas}</small></button>`).join('')+'</div>':'<p class=d>Belum ada profil. Buat profil pertama untuk anak.</p>'}<div class=nav><button class=bt onclick="addForm()">➕ Tambah anak</button><button class=bt onclick="parentIn()">👪 Orang tua</button></div>`)}
+function pad(t,sub,cb){pin='';ov(`<h2>${t}</h2><p class=d id=pm>${sub}</p><div class=dots id=dt>○○○○</div><div class=pad>${[1,2,3,4,5,6,7,8,9,'⌫',0,'✖'].map(k=>`<button class=bt onclick="pk('${k}')">${k}</button>`).join('')}</div>`);pcb=cb}
+function pk(k){if(k=='✖'){ovx();if(!U)showLogin();return}if(k=='⌫')pin=pin.slice(0,-1);else if(pin.length<4)pin+=k;$('#dt').textContent='●'.repeat(pin.length)+'○'.repeat(4-pin.length);if(pin.length==4){const c=pin,f=pcb;pin='';setTimeout(()=>f&&f(c),150)}}
+function askPin(id,msg){const u=AC.users.find(x=>x.id==id);pad(u.av+' '+esc(u.name),msg||'Masukkan PIN kamu',c=>H(c)==u.pin?login(id):askPin(id,'PIN salah, coba lagi'))}
+function addForm(){ov(`<h2>➕ Profil Anak</h2><label>Nama<input id=nm maxlength=20 class=ip></label><label>Kelas<select id=kl class=ip>${[1,2,3,4,5,6].map(k=>`<option>${k}</option>`).join('')}</select></label><div>Pilih avatar:</div><div class=avs>${['🦁','🐼','🦊','🐯','🐸','🐙','🦄','🚀'].map((a,i)=>`<button class="bt ${i?'':'on'}" onclick="avp(this)">${a}</button>`).join('')}</div><div class=nav><button class=bt onclick="showLogin()">◀ Batal</button><button class=bt onclick="addNext()">Buat PIN ▶</button></div>`)}
+function avp(b){document.querySelectorAll('.avs button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}
+function addNext(){const nm=$('#nm').value.trim();if(!nm){$('#nm').focus();return}
+ mkPin({id:'u'+Date.now().toString(36),name:nm,kelas:+$('#kl').value,av:document.querySelector('.avs .on').textContent,pin:''},'',function(n){AC.users.push(n);accSave();login(n.id)})}
+function mkPin(n,msg,done){pad('🔐 Buat PIN',msg||'Pilih 4 angka untuk '+esc(n.name),a=>pad('🔐 Ulangi PIN','Masukkan PIN yang sama',b=>{if(a!=b)return mkPin(n,'PIN tidak sama, ulangi',done);n.pin=H(a);done(n)}))}
+function login(id){U=AC.users.find(u=>u.id==id);S=Object.assign(dflt(),LS('mtk_d_'+id)||{});try{sessionStorage.setItem('mtk_cur',id)}catch(e){}ovx();g=U.kelas;ci=0;who();pick(0)}
+function logout(){stopAll();U=null;S=dflt();try{sessionStorage.removeItem('mtk_cur')}catch(e){}who();drawTabs();showLogin()}
+function menu(){if(!U)return showLogin();ov(`<h2>${U.av} ${esc(U.name)}</h2><div class=mn><button class=bt onclick="prog1()">📊 Perkembanganku</button><button class=bt onclick="ovx()">▶ Lanjut belajar</button><button class=bt onclick="logout()">🚪 Keluar</button></div>`)}
+function prog1(){ov(`<h2>📊 Perkembanganku</h2>${an(U.id,0)}<div class=nav><button class=bt onclick="ovx()">Tutup</button></div>`)}
+function mkPP(msg){pad('👪 Buat PIN Orang Tua',msg||'Pilih 4 angka. PIN ini membuka dashboard perkembangan anak.',a=>pad('Ulangi PIN','Masukkan PIN yang sama',b=>{if(a!=b)return mkPP('PIN tidak sama, ulangi');AC.pp=H(a);accSave();dash(PD)}))}
+function ppCheck(msg){pad('👪 PIN Orang Tua',msg||'Masukkan PIN orang tua',c=>H(c)==AC.pp?dash(PD):ppCheck('PIN salah, coba lagi'))}
+function parentIn(){AC.pp?ppCheck():mkPP()}
+function dash(id){if(!AC.users.length){ov('<h2>👪 Dashboard Orang Tua</h2><p class=d>Belum ada profil anak.</p><div class=nav><button class=bt onclick="ovx();showLogin()">◀ Kembali</button></div>');return}
+ const u=AC.users.find(x=>x.id==(id||PD))||AC.users[0];PD=u.id;
+ ov(`<h2>👪 Dashboard Orang Tua</h2><div class=avs>${AC.users.map(x=>`<button class="bt ${x.id==PD?'on':''}" onclick="dash('${x.id}')">${x.av} ${esc(x.name)}</button>`).join('')}</div>${an(PD,1)}<div class=nav><button class=bt onclick="mkPin(AC.users.find(x=>x.id==PD),'Pilih PIN baru untuk anak',()=>{accSave();dash(PD)})">🔑 Reset PIN anak</button><button class=bt onclick="delU(this)">🗑️ Hapus profil</button><button class=bt onclick="mkPP('Pilih PIN orang tua baru')">🔐 Ganti PIN orang tua</button><button class=bt onclick="ovx();if(!U)showLogin()">✖ Tutup</button></div>`)}
+function delU(b){if(!b.dataset.s){b.dataset.s=1;b.textContent='⚠️ Tekan lagi untuk menghapus';return}
+ AC.users=AC.users.filter(x=>x.id!=PD);try{localStorage.removeItem('mtk_d_'+PD)}catch(e){}accSave();if(U&&U.id==PD)logout();PD=null;dash()}
+function goT(n){for(let k=1;k<=7;k++){const i=T[k].findIndex(t=>t.t==n);if(i>=0){ovx();g=k;pick(i,1);return}}}
+const LN=['Belum cukup data','Perlu dilatih','Berkembang','Paham'],LC=['#9ca3af','#ef4444','#f59e0b','#22c55e'];
+function lv(D){const by={},r={};D.ev.forEach(e=>{(by[e[1]]=by[e[1]]||[]).push(e[2])});for(const m in by){const a=by[m].slice(-10),n=a.length,p=a.reduce((x,y)=>x+y,0)/n;r[m]={n,p,l:n<3?0:p>=.85&&n>=5?3:p>=.6?2:1}}return r}
+function an(id,par){const D=U&&id==U.id?S:Object.assign(dflt(),LS('mtk_d_'+id)||{}),us=AC.users.find(x=>x.id==id)||{kelas:1},L=lv(D),ev=D.ev,ss=D.ss||[];
+ const day=t=>{const d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()},ds={};
+ ev.forEach(e=>{const k=day(e[0]);ds[k]=(ds[k]||0)+1});ss.forEach(e=>{const k=day(e[0]);ds[k]=ds[k]||1});
+ let stk=0;for(let i=0;i<400;i++){if(ds[day(Date.now()-i*864e5)])stk++;else if(i)break}
+ const tot=ev.length,ok=ev.reduce((a,e)=>a+e[2],0),all=[];for(let k=1;k<=7;k++)T[k].forEach((t,i)=>{if(!t.prac)all.push([k,i,t.t])});
+ const pm=all.filter(a=>L[a[2]]&&L[a[2]].l==3).length,nd=Object.keys(ds).length;
+ const cards=`<div class=cards><div class=cd><b>${tot}</b>soal dijawab</div><div class=cd><b>${tot?Math.round(ok/tot*100):0}%</b>jawaban benar</div><div class=cd><b>${pm}/${all.length}</b>materi dipahami</div><div class=cd><b>${ss.length}</b>sesi latihan</div><div class=cd><b>${nd}</b>hari belajar</div><div class=cd><b>${stk}🔥</b>hari beruntun</div></div>`;
+ let map='';for(let k=1;k<=7;k++){map+=`<div class=lb style="margin-top:6px">${k==7?'⚡ Trik Cepat':'Kelas '+k}</div><div class=chips>`+all.filter(a=>a[0]==k).map(a=>{const r=L[a[2]],c=LC[r?r.l:0];return `<span class=chip style="border-color:${c};background:${c}22">${a[2]}${r?' · '+Math.round(r.p*100)+'%':''}</span>`}).join('')+'</div>'}
+ const leg=LN.map((n,i)=>`<span class=chip style="border-color:${LC[i]};background:${LC[i]}22">${n}</span>`).join(' ');
+ const sl=ss.slice(-12),pts=sl.map((e,i)=>[sl.length>1?20+i*(296/(sl.length-1)):160,100-e[2]/NQ*85,e[2]]);
+ const ln=sl.length?`<svg viewBox="0 0 336 120" width="100%"><line x1="20" y1="15" x2="316" y2="15" stroke="currentColor" opacity=".2"/><polyline fill="none" stroke="${A}" stroke-width="3" points="${pts.map(q=>q[0]+','+q[1]).join(' ')}"/>${pts.map(q=>`<circle cx="${q[0]}" cy="${q[1]}" r="4" fill="${A}"/><text x="${q[0]}" y="${q[1]-8}" text-anchor="middle" font-size="10">${q[2]}</text>`).join('')}</svg><div class=lb>Skor ${sl.length} sesi latihan terakhir (maks ${NQ})</div>`:'<p class=d>Belum ada sesi latihan 20 soal.</p>';
+ const days=[];for(let i=13;i>=0;i--){const t=Date.now()-i*864e5;days.push([new Date(t).getDate(),ds[day(t)]||0])};const mx=Math.max(1,...days.map(d=>d[1]));
+ const bars=`<svg viewBox="0 0 336 90" width="100%">${days.map((d,i)=>`<rect x="${i*24+4}" y="${70-d[1]/mx*60}" width="18" height="${d[1]/mx*60}" rx="3" fill="${C}"/><text x="${i*24+13}" y="84" text-anchor="middle" font-size="9">${d[0]}</text>${d[1]?`<text x="${i*24+13}" y="${66-d[1]/mx*60}" text-anchor="middle" font-size="9">${d[1]}</text>`:''}`).join('')}</svg><div class=lb>Aktivitas 14 hari terakhir (jumlah soal per tanggal)</div>`;
+ let tr='Belum cukup sesi untuk menilai tren (butuh minimal 2 sesi latihan).';
+ if(ss.length>=2){const a=ss.slice(-3).map(e=>e[2]),b=(ss.length>=4?ss.slice(-6,-3):ss.slice(0,1)).map(e=>e[2]),m=x=>x.reduce((p,q)=>p+q,0)/x.length,d=m(a)-m(b);tr=d>=1.5?'📈 Nilai latihan <b>naik</b> dibanding sebelumnya.':d<=-1.5?'📉 Nilai latihan <b>turun</b>. Coba ulangi materi yang lemah.':'➡️ Nilai latihan <b>stabil</b>.'}
+ const ent=Object.entries(L),kuat=ent.filter(e=>e[1].l>=2).sort((a,b)=>b[1].p-a[1].p).slice(0,3),lem=ent.filter(e=>e[1].l==1).sort((a,b)=>a[1].p-b[1].p).slice(0,3),bel=all.filter(a=>!L[a[2]]),nx=bel.find(a=>a[0]==us.kelas);
+ const lk=n=>par?esc(n):`<button class=bt onclick="goT('${n.replace(/'/g,"\\'")}')">📖 ${esc(n)}</button>`;
+ let rec1=lem.length?`Perlu dilatih lagi: ${lem.map(e=>lk(e[0])).join(' ')}`:nx?`Coba materi baru: ${lk(nx[2])}`:tot?'Semua materi yang dicoba sudah baik. Coba latihan kelas yang lebih tinggi 🚀':'Mulai dengan membuka materi dan menekan "Coba sendiri".';
+ const ins=`<p>${tr}</p>`+(kuat.length?`<p>💪 <b>Kekuatan:</b> ${kuat.map(e=>esc(e[0])+' ('+Math.round(e[1].p*100)+'%)').join(', ')}</p>`:'')+(lem.length?`<p>⚠️ <b>Perlu dilatih:</b> ${lem.map(e=>esc(e[0])+' ('+Math.round(e[1].p*100)+'%)').join(', ')}</p>`:'')+`<p>🧭 <b>Saran:</b> ${rec1}</p><p class=lb>${bel.length} dari ${all.length} materi belum dicoba. Tingkat pemahaman dihitung dari 10 jawaban terakhir per materi: Paham ≥85% (min. 5 soal), Berkembang 60–84%, Perlu dilatih &lt;60%.</p>`;
+ return cards+'<h3>🧠 Analisa Otomatis</h3>'+ins+'<h3>📈 Perkembangan Skor</h3>'+ln+'<h3>📅 Kebiasaan Belajar</h3>'+bars+'<h3>🗺️ Peta Pemahaman</h3><div class=chips>'+leg+'</div>'+map}
+function start(){let id=null;try{id=sessionStorage.getItem('mtk_cur')}catch(e){}if(id&&AC.users.find(u=>u.id==id))login(id);else{drawTabs();pick(0);showLogin()}}
+document.addEventListener('keydown',e=>{if(!pcb||$('#ov').hidden)return;if(/^[0-9]$/.test(e.key))pk(e.key);else if(e.key=='Backspace')pk('⌫')});
+
 const tabs=$('#tabs'),list=$('#list'),sim=$('#sim');
 const TOT=Object.values(T).reduce((a,b)=>a+b.filter(x=>!x.prac).length,0);
 function drawTabs(){tabs.innerHTML=[1,2,3,4,5,6,7].map(k=>`<button class="${k==g?'on':''}" onclick="go(${k})">${k==7?'⚡ Trik':'Kelas '+k}</button>`).join('');
@@ -308,10 +372,10 @@ function upd(m){if(!cur||!cur.c||!cur.c.length)return;const v={};cur.c.forEach(c
  if(m){o.classList.remove('pop');void o.offsetWidth;o.classList.add('pop');mk()}}
 function fx(e,n){for(let i=0;i<(n||6);i++){const s=document.createElement('span');s.className='fx';s.textContent=e;s.style.left=(10+Math.random()*80)+'%';s.style.animationDelay=(i*.08)+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),1700)}}
 function cj(x,a){document.querySelectorAll('#cb .opt button').forEach(z=>{z.disabled=true;const v=+z.dataset.v;if(v==a)z.classList.add('ok');else if(v==x)z.classList.add('no')});
- $('#cf').innerHTML=(x==a?'✅ Benar! Hebat!':`❌ Belum tepat. Jawabannya <b>${a}</b>. Baca lagi kotak penjelasan di atas ya.`)+'<br><button class=bt onclick="ct()">🔁 Soal lain</button>';if(x==a){fx('🎉',5);mk()}}
+ $('#cf').innerHTML=(x==a?'✅ Benar! Hebat!':`❌ Belum tepat. Jawabannya <b>${a}</b>. Baca lagi kotak penjelasan di atas ya.`)+'<br><button class=bt onclick="ct()">🔁 Soal lain</button>';rec(cur.t,x==a);if(x==a){fx('🎉',5);mk()}}
 function qz(){stopAll();st={};qs=Array.from({length:NQ},()=>{const f=Q[g][R(0,Q[g].length-1)],[q,a,m]=f(),o=new Set([a]);while(o.size<4){const x=a+[1,2,3,5,10][R(0,4)]*(R(0,1)?1:-1);if(a>=0&&x<0)continue;o.add(x)}return{q,a,m,o:[...o].sort(()=>Math.random()-.5)}});qi=0;sc=0;inQ=1;qn()}
 function qn(){clearInterval(tt);
- if(qi>=NQ){inQ=0;if(S.best[g]==null||sc>S.best[g]){S.best[g]=sc;sv()}drawTabs();
+ if(qi>=NQ){inQ=0;S.ss.push([Date.now(),g,sc]);if(S.best[g]==null||sc>S.best[g])S.best[g]=sc;sv();drawTabs();
   const m=sc>=18?'Hebat sekali! 🌟':sc>=14?'Bagus! Terus berlatih 💪':'Ayo pelajari lagi materinya, lalu coba lagi 📚';
   const an=Object.entries(st).sort((a,b)=>a[1][0]/a[1][1]-b[1][0]/b[1][1]).map(([k,x])=>{const i=T[g].findIndex(t=>t.t==k),w=x[0]/x[1]<.6;return `<div class=ar>${w?'⚠️':'✅'} ${k}: ${x[0]}/${x[1]} benar${w&&i>=0?` <button class=bt onclick="pick(${i},1)">📖 Pelajari</button>`:''}</div>`}).join('');
   sim.innerHTML=`<h2>🏁 Skor Akhir · Kelas ${g}</h2><div class=score>${sc}<small> / ${NQ}</small></div><div class=stars>${'⭐'.repeat(Math.round(sc/NQ*5))}</div><div id=sum>${m}<br><br><b>Analisa per materi:</b>${an}</div><div class=nav><button class=bt onclick="qz()">🔁 Ulangi (soal baru)</button><button class=bt onclick="pick(0,1)">📖 Kembali ke materi</button></div>`;if(sc>=18)fx('🎉',10);return}
@@ -319,13 +383,13 @@ function qn(){clearInterval(tt);
  sim.innerHTML=`<h2>📝 Latihan Kelas ${g}</h2><div class=pbar><i style="width:${qi/NQ*100}%"></i></div><div class=qh><span>Soal ${qi+1} / ${NQ}</span><span id=tm>⏱️ 30 dtk</span></div><div class=tbar><i id=tb style="width:100%"></i></div><div id=out class=q>${x.q}</div><div class=opt>${x.o.map((o,i)=>`<button class="bt big" data-v="${o}" onclick="qa(${o})"><kbd>${i+1}</kbd>${o}</button>`).join('')}</div><div id=sum style="display:none"></div>`;
  tt=setInterval(()=>{if(!inQ){clearInterval(tt);return}tl--;const e=$('#tm');if(e){e.textContent='⏱️ '+tl+' dtk';$('#tb').style.width=tl/30*100+'%'}if(tl<=0)qa(null)},1000)}
 function qa(o){if(!inQ)return;const bs=[...document.querySelectorAll('.opt button')];if(bs.length&&bs[0].disabled)return;clearInterval(tt);
- const x=qs[qi],ok=o!==null&&o==x.a;if(ok)sc++;st[x.m]=st[x.m]||[0,0];st[x.m][1]++;if(ok)st[x.m][0]++;
+ const x=qs[qi],ok=o!==null&&o==x.a;if(ok)sc++;rec(x.m,ok);st[x.m]=st[x.m]||[0,0];st[x.m][1]++;if(ok)st[x.m][0]++;
  bs.forEach(b=>{b.disabled=true;const v=+b.dataset.v;if(v==x.a)b.classList.add('ok');else if(o!==null&&v==o)b.classList.add('no')});
  const s=$('#sum');s.style.display='block';s.innerHTML=(ok?'✅ Benar!':`${o===null?'⏰ Waktu habis. ':'❌ Belum tepat. '}Jawaban: <b>${x.a}</b>`)+`<br><span class=lb>Materi terkait: ${x.m}</span><br><button id=nx class=bt onclick="qi++;qn()">${qi<NQ-1?'Lanjut ➡️':'Lihat skor'}</button>`;
  if(ok)fx('✨',3);const n=$('#nx');if(n&&n.focus)n.focus()}
 document.addEventListener('keydown',e=>{if(!inQ)return;const bs=[...document.querySelectorAll('.opt button')];if(!bs.length)return;
  if(/^[1-4]$/.test(e.key)&&!bs[0].disabled&&bs[+e.key-1])bs[+e.key-1].click();
  else if((e.key=='Enter'||e.key==' ')&&bs[0].disabled){const n=$('#nx');if(n){e.preventDefault();n.click()}}});
-drawTabs();pick(0);
+start();
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script></body></html>
